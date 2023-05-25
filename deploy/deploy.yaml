@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: leaderelection
+  name: leaderelection
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: leaderelection
+  template:
+    metadata:
+      labels:
+        app: leaderelection
+    spec:
+      automountServiceAccountToken: true
+      serviceAccount: leaderelection-sa
+      containers:
+      - image: leaderelection:v1
+        name: leaderelection
+        ports:
+          - containerPort: 8080
+        args:
+          - --lease-name=example-lease
+          - --lease-mode=true
+        env:
+          - name: POD_NAME
+            valueFrom:
+                  fieldRef:
+                    apiVersion: v1
+                    fieldPath: metadata.name
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: leaderelection-svc
+  namespace: default
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      nodePort: 31180
+  selector:
+    app: leaderelection
