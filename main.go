@@ -3,134 +3,99 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
-	"net/http"
-	"os"
-	"time"
-
 	"k8s-leader-election/pkg/cleanup"
+	config2 "k8s-leader-election/pkg/config"
+	"k8s-leader-election/pkg/leaselock"
+	"k8s-leader-election/pkg/server"
 	"k8s-leader-election/pkg/signals"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/leaderelection"
-	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/klog"
-	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"os"
+	"time"
 )
 
 var (
 	client *clientset.Clientset
 )
 
-// getNewLock 创建集群锁资源
-func getNewLock(lockname, podname, namespace string) *resourcelock.LeaseLock {
-	return &resourcelock.LeaseLock{
-		LeaseMeta: metav1.ObjectMeta{
-			Name:      lockname,
-			Namespace: namespace,
-		},
-		Client: client.CoordinationV1(),
-		LockConfig: resourcelock.ResourceLockConfig{
-			Identity: podname,
-		},
-	}
-}
-
 /*
-	 使用 gin http server 启动test接口返回pod名称
+ 使用 gin http server 启动test接口返回pod名称
 
-	 场景：模拟服务挂掉后还会有其他pod接受请求的场景，主要模拟有状态服务
+ 场景：模拟服务挂掉后还会有其他pod接受请求的场景，主要模拟有状态服务
 */
-
-func test(w http.ResponseWriter, req *http.Request) {
-	fmt.Println("test server")
-	fmt.Println("pod name: ", os.Getenv("POD_NAME"))
-	w.WriteHeader(200)
-	w.Write([]byte(fmt.Sprintf("pod name: %v\n", os.Getenv("POD_NAME"))))
-}
-
-// Run 执行
-func Run() {
-
-	// 心跳检测健康机制
-	go func() {
-		handler := &healthz.Handler{
-			Checks: map[string]healthz.Checker{
-				"healthz": healthz.Ping,
-			},
-		}
-		if err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", 9999), handler); err != nil {
-			klog.Fatalf("Failed to start healthz endpoint: %v", err)
-		}
-	}()
-
-	http.HandleFunc("/test", test)
-	http.ListenAndServe(fmt.Sprintf(":%v", "8080"), nil)
-}
-
 
 func main() {
 	var (
-		leaseLockName      string                  // 锁名
-		leaseLockNamespace string                  // 获取锁的namespace
-		leaseLockMode      bool					   // 是否为选主模式
+		leaseLockName      string // 锁名
+		leaseLockNamespace string // 获取锁的namespace
+		leaseLockMode      bool   // 是否为选主模式
+		debugMode          bool
 		podName            = os.Getenv("POD_NAME") // 需要取到pod name
 	)
-	flag.StringVar(&leaseLockName, "lease-name", "d", "election lease lock name")
+	flag.StringVar(&leaseLockName, "lease-name", "lease-default-name", "election lease leaselock name")
 	flag.BoolVar(&leaseLockMode, "lease-mode", true, "Whether to use election mode")
-	flag.StringVar(&leaseLockNamespace, "lease-namespace", "default", "election lease lock namespace")
+	flag.BoolVar(&debugMode, "debug-mode", true, "Whether to use debug mode")
+	flag.StringVar(&leaseLockNamespace, "lease-namespace", "default", "election lease leaselock namespace")
 	flag.Parse()
 
 	// clientSet
-	config, err := rest.InClusterConfig()
-	client = clientset.NewForConfigOrDie(config)
-
-	if err != nil {
-		klog.Fatalf("failed to get kubeconfig")
+	var config *rest.Config
+	if debugMode {
+		// 本地debug使用
+		c := config2.K8sConfig{}
+		config = c.K8sRestConfig()
+	} else {
+		config, _ = rest.InClusterConfig()
 	}
 
+	client = clientset.NewForConfigOrDie(config)
 	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		<-signals.SetupSignalHandler()
+		cancel()
+	}()
 	defer cancel()
+
 	if leaseLockMode {
-		lock := getNewLock(leaseLockName, podName, leaseLockNamespace)
+		lock := leaselock.GetNewLock(leaseLockName, podName, leaseLockNamespace, client)
 		// 选主模式
 		leaderelection.RunOrDie(ctx, leaderelection.LeaderElectionConfig{
 			Lock:            lock,
 			ReleaseOnCancel: true,
-			LeaseDuration:   15 * time.Second,
-			RenewDeadline:   10 * time.Second,
-			RetryPeriod:     2 * time.Second,
+			LeaseDuration:   15 * time.Second, // 租约时长，follower用来判断集群锁是否过期
+			RenewDeadline:   10 * time.Second, // leader更新锁的时长
+			RetryPeriod:     2 * time.Second,  // 重试获取锁的间隔
+			// 当发生不同选主事件时的回调方法
 			Callbacks: leaderelection.LeaderCallbacks{
+				// 成为leader时，需要执行的回调
 				OnStartedLeading: func(c context.Context) {
-
-					_, cancel := context.WithCancel(context.Background())
-					go func() {
-						<-signals.SetupSignalHandler()
-						cancel()
-					}()
 					// 执行server逻辑
-					Run()
+					klog.Info("leader election server running...")
+					server.Run(c)
 				},
+				// 不是leader时，需要执行的回调
 				OnStoppedLeading: func() {
-					klog.Info("no longer a leader.")
+					klog.Info("no longer a leader...")
+					klog.Info("clean up server...")
 					// 如果有退出逻辑可以在此执行
 					cleanup.CleanUp()
 				},
-				OnNewLeader: func(current_id string) {
-					if current_id == podName {
+				// 当产生新leader时，执行的回调
+				OnNewLeader: func(currentId string) {
+					if currentId == podName {
 						klog.Info("still the leader!")
 						return
 					}
-					klog.Infof("new leader is %v", current_id)
+					klog.Infof("new leader is %v", currentId)
 				},
 			},
 		})
 	} else {
 		// 一般模式
-		Run()
+		klog.Info("server running...")
+		server.Run(ctx)
 	}
 
 }
-
-
