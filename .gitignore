@@ -1,5 +1,5 @@
 
-config
+k8sconfig
 # Binaries for programs and plugins
 *.exe
 *.exe~
