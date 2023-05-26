@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	serverAddr := "ws://127.0.0.1:8800/ws/echo/"
+	serverAddr := "ws://42.193.17.123:31180/ws/echo/"
 
 	testWebsocket(serverAddr)
 }

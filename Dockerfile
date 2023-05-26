@@ -14,7 +14,7 @@ RUN go mod download
 
 # copy source code
 COPY main.go main.go
-COPY pkg/signals/ signals/
+COPY pkg/ pkg/
 # build
 RUN CGO_ENABLED=0 go build \
     -a -o leaderelection main.go
