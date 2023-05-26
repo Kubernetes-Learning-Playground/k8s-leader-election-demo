@@ -1,0 +1,41 @@
+apiVersion: v1
+clusters:
+- cluster:
+    server: https://kubernetes.docker.internal:6443
+  name: docker-desktop
+- cluster:
+    extensions:
+    - extension:
+        last-update: Sun, 07 May 2023 13:44:26 CST
+        provider: minikube.sigs.k8s.io
+        version: v1.29.0
+      name: cluster_info
+    server: https://127.0.0.1:54524
+  name: minikube
+contexts:
+- context:
+    cluster: docker-desktop
+    user: docker-desktop
+  name: docker-desktop
+- context:
+    cluster: minikube
+    extensions:
+    - extension:
+        last-update: Sun, 07 May 2023 13:44:26 CST
+        provider: minikube.sigs.k8s.io
+        version: v1.29.0
+      name: context_info
+    namespace: default
+    user: minikube
+  name: minikube
+current-context: minikube
+kind: Config
+preferences: {}
+users:
+- name: docker-desktop
+  user:
+    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBbkpqUHNROWZnOWE5OWg1U0o0UTFBL1RabldFWE93Z0paVU9Bci9hRVU1ZWtJRCtRCllVVmNzSGJYbmhUc1NEL0lTc1V4M1pHN2UxVjZabHMrQ2Z2ajV3NUlzV2JXQTE4ay9mbVhTSWRwRXlhditGQmIKTUxQVU1xazlSSWVKYzVEZE1QZEgzWEpxcUt1OUpjLytGcXMxUFg4b1M5VjAyMHBLWTFyRUlRNDFGRmtZWjFMVwo2aWxlY2g4Rk0rUEQ3VUhjS0hkdEMvcUlqRHhxTzcva3pYSmMwVXE0eG0yVktrd0RRaHJYSTg5T1pQT0pIVlFDCkJIUWhMTVJPMkN4b1c5ZnpPL1plcTNtOTRoNThUTEFOQ3djSTJ2RUdwd3JLU0kxTWR1Vmw2V3BRZE95QkEwMmIKNXVnYTJoMCtBNXFuN2pGYWd0S3lEcE50Tklod1laYjNNazh6UXdJREFRQUJBb0lCQUhzd0R2cEhrS2ppN2s3RgpyWFVlb0tIN0pKR1VoalRPN3EwMWUrOXdxc29qbVY0eEFzQXlVMmNTSmk1YVlVRzR3elJtaWdLMkdOazk5ZXE5ClRrR0dZTk1ydm0ybjZ5VjkzRmphMW5LYzYwREFoMTk4dnkvQjEyVC9FNDVzWE9tSGhTbDI3WmE3NGtITDBDRUYKek9sQ1I4Q1gzamhCdEFxcUYzaXZOMmlWaDVYNEFZRjlpV2dnci9QcERzQSswUHhsSDJjYm00dmdkUFZhOW1WZwp3dXJmeUUxWTVJSmRLQ1JBMXo0amdFaDgyTGQ0ZG5Db3lCQTloWTFCTDhCdGpIMHlRNndHTDVCUlZYeXZxaTFYCjVXWUluWjZmak1nbzZEOGVocmFMdXF0T1lOM1lXdTFtdlZmbnpVRU5Ea29YOUI4ZWF3bXZER1E1THZuN2ZMbmkKS1NBK1VoRUNnWUVBd3FrRC80WHIxU04wQ1lUeUEvR1RaeWhlRy81VGRkaVE2by91Vk16MEVXenNiYkNHWkpzWApvVnlxUjl2UG1xcGlFRTJLUVRjSFpqS0dnWmhqSklxeWZ2ZnBuNVYrRStlbWxRTHFYa0hlakNMcU9BMlk3ZTdLCm1tUWJ4S1VrRkp4WHJsQ2JuUmxSaTl6S2xVcEFUZ3ZHaWNKWEtTRmIwL0ptNHB4dTZCRTZBN2tDZ1lFQXpmRkgKZzBCckZJWW5OQnNNQllqcXFtT1pWS3U3UjE0YnlwY0t1RC9yaVVNdXRYM1MvMFlwUWM4UHBrYmdQOGF5d0dvagpCVVNDMTlWalpCNjVVMnBFRUFZL3ZyRHJWOVo3Ykx1ZUV0eTdmQlVDMHBmWTd4MktDZzJTVW9YQ2syWFp5VGhQCmZwdlQwV2psUGJTUFdQcjRKUTFIbHZQNDg3aGppR1A5b2hwb0pOc0NnWUExY2thQXYvcHllTnVCU1psUmIrQ3kKOENoMnN5dWpMYVVNWWh4aitDb0RKczc3aHY0L1hUM3R0ZzJpMFQxOUQ4OEEvdWs0NHEwTGFFLzZBU2NuZjFWbQoreGFRRkhHYmNYMFJhTTJFdDcwczZPRTZKckdZa25uYVRpWTVwY1gwU3NEZ1FZMllZcjA3RTVJanoxRThuSXNVCmcrRitqNFF3KzFzNFdROHlkSmhqTVFLQmdRQzhRRGp4bG5vTGlkSGVSSGNKdkMxZVVhc0FoZmFzZHk4S1VtVS8KSlZibDR4NllVb3NFUkJ0RWg4VXpab2hvWS9aVUF2RStTSEVlWUhYNU9FaUtJcEpTMzVOM2VYdTNrRnpFZVFBMwpGOFRkMk1yNnZFbFYwbmV6VnRLUlVxb1pXTG5xd09tUnYxbXhpNlE1Y29xeWVMOUtCMGlRaVRYaGU0U29VVmF3CnpsaXlqd0tCZ0M0bFBrUVJPamR5NGZNNVdka3ljM3hpMkpONUsyQ21BNzI0YkNYMEhyTk1xZWsvWkhOVXpqcmoKbC85VURPYlZ0M2NHeStIcjZqV3Vsc2x1RWEwbStMbTJYS29IRXI4MnhpcHlOSjIyM0hHemJZMWQwbkJtM0xELwoydCtnS0NrT2hsekc5MDIwd1E1Z09mOG13OVpLNDNLMjM1R1h0cFdkUFVuOEcybTVUSnJjCi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==
+- name: minikube
+  user:
+    client-certificate: /Users/zhenyu.jiang/.minikube/profiles/minikube/client.crt
+    client-key: /Users/zhenyu.jiang/.minikube/profiles/minikube/client.key

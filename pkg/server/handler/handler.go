@@ -27,7 +27,7 @@ func Echo(writer http.ResponseWriter, request *http.Request) {
 	name := request.Header["Clientname"]
 
 	// 2. 使用websocket升级协议
-	client, err := core.Upgrader.Upgrade(writer, request, nil) // 升级
+	client, err := core.Upgrader.Upgrade(writer, request, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,7 +37,7 @@ func Echo(writer http.ResponseWriter, request *http.Request) {
 		name = []string{"sample" + uuid.New().String()}
 	}
 	data := name[0] + "is connected..."
-	err = client.WriteJSON(data) // 发送回去同意
+	err = client.WriteJSON(data) // 发送回客户端同意
 	klog.Infof(data)
 	if err != nil {
 		klog.Error("connect error: ", err)

@@ -20,6 +20,8 @@ var (
 	client *clientset.Clientset
 )
 
+
+
 /*
  使用 gin http server 启动test接口返回pod名称
 
@@ -32,13 +34,22 @@ func main() {
 		leaseLockNamespace string // 获取锁的namespace
 		leaseLockMode      bool   // 是否为选主模式
 		debugMode          bool
+		port 			   int
+		healthPort         int
 		podName            = os.Getenv("POD_NAME") // 需要取到pod name
 	)
 	flag.StringVar(&leaseLockName, "lease-name", "lease-default-name", "election lease leaselock name")
 	flag.BoolVar(&leaseLockMode, "lease-mode", true, "Whether to use election mode")
-	flag.BoolVar(&debugMode, "debug-mode", true, "Whether to use debug mode")
+	flag.BoolVar(&debugMode, "debug-mode", false, "Whether to use debug mode")
 	flag.StringVar(&leaseLockNamespace, "lease-namespace", "default", "election lease leaselock namespace")
+	flag.IntVar(&port, "server-port", 8888, "")
+	flag.IntVar(&healthPort, "health-check-port", 9999, "")
 	flag.Parse()
+
+	opt := &server.ServerOptions{
+		Port: port,
+		HealthPort: healthPort,
+	}
 
 	// clientSet
 	var config *rest.Config
@@ -73,7 +84,7 @@ func main() {
 				OnStartedLeading: func(c context.Context) {
 					// 执行server逻辑
 					klog.Info("leader election server running...")
-					server.Run(c)
+					server.Run(c, opt)
 				},
 				// 不是leader时，需要执行的回调
 				OnStoppedLeading: func() {
@@ -95,7 +106,7 @@ func main() {
 	} else {
 		// 一般模式
 		klog.Info("server running...")
-		server.Run(ctx)
+		server.Run(ctx, opt)
 	}
 
 }

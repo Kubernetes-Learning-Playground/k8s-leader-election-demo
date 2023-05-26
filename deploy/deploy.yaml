@@ -25,6 +25,8 @@ spec:
         args:
           - --lease-name=example-lease
           - --lease-mode=true
+          - --server-port=8080
+          - --health-check-port=9998
         env:
           - name: POD_NAME
             valueFrom:

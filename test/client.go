@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	serverAddr := "ws://127.0.0.1:8089/ws/echo/"
+	serverAddr := "ws://127.0.0.1:8800/ws/echo/"
 
 	testWebsocket(serverAddr)
 }
@@ -27,10 +27,10 @@ func testWebsocket(serverAddr string) {
 		log.Println(err)
 		return
 	}
-	//离开作用域关闭连接，go 的常规操作
+	// 关闭连接
 	defer connect.Close()
 
-	//定时向客户端发送数据
+	// 定时向客户端发送数据
 	go tickWriter(connect)
 
 	//启动数据读取循环，读取客户端发送来的数据
