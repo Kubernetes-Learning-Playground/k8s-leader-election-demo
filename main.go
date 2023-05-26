@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"k8s-leader-election/pkg/cleanup"
-	config2 "k8s-leader-election/pkg/config"
+	config2 "k8s-leader-election/pkg/configs"
 	"k8s-leader-election/pkg/leaselock"
 	"k8s-leader-election/pkg/server"
 	"k8s-leader-election/pkg/signals"
