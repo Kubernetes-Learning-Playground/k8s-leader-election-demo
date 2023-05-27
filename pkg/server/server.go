@@ -10,8 +10,10 @@ import (
 )
 
 type ServerOptions struct {
-	Port       int
-	HealthPort int
+	Port               int
+	HealthPort         int
+	LeaderElectionMode bool
+	DebugMode          bool
 }
 
 // Run 执行

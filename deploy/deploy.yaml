@@ -23,6 +23,7 @@ spec:
         ports:
           - containerPort: 8080
         args:
+          # 服务配置项
           - --lease-name=example-lease
           - --lease-mode=true
           - --server-port=8080
@@ -42,7 +43,7 @@ metadata:
 spec:
   type: NodePort
   ports:
-    - port: 8080
-      nodePort: 31180
+    - port: 8080      # 容器端口
+      nodePort: 31180 # 对外暴露的端口
   selector:
     app: leaderelection

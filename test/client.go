@@ -1,31 +1,43 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/gorilla/websocket"
-	"log"
+	"k8s.io/klog"
 	"time"
 )
 
-func main() {
-	serverAddr := "ws://42.193.17.123:31180/ws/echo/"
+/*
+	客户端连接的测试代码
+*/
 
-	testWebsocket(serverAddr)
+var (
+	serverAddr = "ws://42.193.17.123:31180/ws/echo/"
+)
+
+func main() {
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	// 重试机制
+	RetryTimeout(ctx, time.Second*2, testWebsocket)
 }
 
-func testWebsocket(serverAddr string) {
+func testWebsocket(ctx context.Context) error {
 
 	dialer := websocket.Dialer{}
-	//向服务器发送连接请求，websocket
 
+	// 使用header作为唯一标示
 	reqHeader := map[string][]string{
-		"clientname": []string{"ClientRegion"},
+		"Clientname": []string{"test-client"},
 	}
 
+	//向服务器发送连接请求，websocket
 	connect, _, err := dialer.Dial(serverAddr, reqHeader)
 	if nil != err {
-		log.Println(err)
-		return
+		klog.Error(err)
+		return err
 	}
 	// 关闭连接
 	defer connect.Close()
@@ -40,8 +52,8 @@ func testWebsocket(serverAddr string) {
 		//messageData 消息数据
 		messageType, messageData, err := connect.ReadMessage()
 		if nil != err {
-			log.Println(err)
-			break
+			klog.Error(err)
+			return err
 		}
 		switch messageType {
 		case websocket.TextMessage: //文本数据
@@ -59,13 +71,41 @@ func testWebsocket(serverAddr string) {
 func tickWriter(connect *websocket.Conn) {
 	for i := 0; i < 5; i++ {
 		//向客户端发送类型为文本的数据
-		msg := "from client to server"
+		msg := "from client to server, send test message"
 		err := connect.WriteMessage(websocket.TextMessage, []byte(msg))
 		if nil != err {
-			log.Println(err)
+			klog.Error(err)
 			break
 		}
 		//休息一秒
 		time.Sleep(time.Second)
+	}
+}
+
+// RetryTimeout 重试模式
+func RetryTimeout(ctx context.Context, retryInterval time.Duration, execute func(ctx context.Context) error) {
+	for {
+		klog.Info("execute func\n")
+		if err := execute(ctx); err == nil {
+			klog.Info("work finished successfully\n")
+			return
+		}
+		klog.Info("execute if timeout has expired\n")
+		if ctx.Err() != nil {
+			klog.Errorf("time expired 1 : %s\n", ctx.Err())
+			return
+		}
+		klog.Infof("wait %s before trying again\n", retryInterval)
+		// 创建一个计时器
+		t := time.NewTimer(retryInterval)
+		select {
+		case <-ctx.Done():
+			klog.Errorf("timed expired 2 :%s\n", ctx.Err())
+			t.Stop()
+			return
+		// 定时执行！
+		case <-t.C:
+			klog.Info("retry again")
+		}
 	}
 }

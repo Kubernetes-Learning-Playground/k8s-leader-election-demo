@@ -13,6 +13,7 @@ import (
 	"os"
 )
 
+// Test 测试handler
 func Test(w http.ResponseWriter, req *http.Request) {
 	fmt.Println("test server")
 	fmt.Println("pod name: ", os.Getenv("POD_NAME"))
@@ -37,7 +38,7 @@ func Echo(writer http.ResponseWriter, request *http.Request) {
 		name = []string{"sample" + uuid.New().String()}
 	}
 	data := name[0] + "is connected..."
-	err = client.WriteJSON(data) // 发送回客户端同意
+	err = client.WriteJSON(data) // 发送回客户端确认收到连接请求
 	klog.Infof(data)
 	if err != nil {
 		klog.Error("connect error: ", err)
@@ -48,8 +49,9 @@ func Echo(writer http.ResponseWriter, request *http.Request) {
 
 }
 
+// Send 选取特定客户端发送消息
 func Send(writer http.ResponseWriter, request *http.Request) {
-	s, _ := ioutil.ReadAll(request.Body) // 把body内容读入字符串s
+	s, _ := ioutil.ReadAll(request.Body) // body内容读入字符串s
 	klog.Infof("\n%s\n", string(s))      // 在返回页面中显示内容
 	var reqBody model.SendRequestBody
 	err := json.Unmarshal(s, &reqBody)

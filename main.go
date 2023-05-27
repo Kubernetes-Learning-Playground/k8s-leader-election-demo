@@ -20,8 +20,6 @@ var (
 	client *clientset.Clientset
 )
 
-
-
 /*
  使用 gin http server 启动test接口返回pod名称
 
@@ -34,7 +32,7 @@ func main() {
 		leaseLockNamespace string // 获取锁的namespace
 		leaseLockMode      bool   // 是否为选主模式
 		debugMode          bool
-		port 			   int
+		port               int
 		healthPort         int
 		podName            = os.Getenv("POD_NAME") // 需要取到pod name
 	)
@@ -47,14 +45,16 @@ func main() {
 	flag.Parse()
 
 	opt := &server.ServerOptions{
-		Port: port,
-		HealthPort: healthPort,
+		Port:               port,
+		HealthPort:         healthPort,
+		LeaderElectionMode: leaseLockMode,
+		DebugMode:          debugMode,
 	}
 
 	// clientSet
 	var config *rest.Config
-	if debugMode {
-		// 本地debug使用
+	if opt.DebugMode {
+		// 本地debug使用，默认需要在项目根目录复制一份k8sconfig(.kube/config)配置文件
 		c := config2.K8sConfig{}
 		config = c.K8sRestConfig()
 	} else {
@@ -69,7 +69,7 @@ func main() {
 	}()
 	defer cancel()
 
-	if leaseLockMode {
+	if opt.LeaderElectionMode {
 		lock := leaselock.GetNewLock(leaseLockName, podName, leaseLockNamespace, client)
 		// 选主模式
 		leaderelection.RunOrDie(ctx, leaderelection.LeaderElectionConfig{

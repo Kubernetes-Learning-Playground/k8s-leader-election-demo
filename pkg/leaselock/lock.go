@@ -15,7 +15,7 @@ func GetNewLock(lockname, podname, namespace string, client *clientset.Clientset
 		},
 		Client: client.CoordinationV1(),
 		LockConfig: resourcelock.ResourceLockConfig{
-			Identity: podname, // 锁的唯一标示
+			Identity: podname, // 锁的唯一标示，使用pod name
 		},
 	}
 }
