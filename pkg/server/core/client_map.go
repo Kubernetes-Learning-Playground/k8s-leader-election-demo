@@ -22,7 +22,8 @@ type ClientMapStruct struct {
 
 }
 
-// Store 存入conn信息到map中
+// Store 存入conn信息到map中，代表ws实例已经被服务端管理起来，并启动3个goroutine
+// 维护每个连接实例
 func (c *ClientMapStruct) Store(conn *websocket.Conn, name string) {
 	wsClient := NewWsClient(conn)
 	wsClientToStore := NewWsClientToStore(wsClient, name)
@@ -56,6 +57,7 @@ func (c *ClientMapStruct) SendAll(msg string) {
 	})
 }
 
+// Send 从维护的map中找到特定的局点，并发送消息
 func Send(clientMap *ClientMapStruct, clientName string, input interface{}) error {
 	// 1. 从map中查找需要的client端
 	value, ok := clientMap.Data.Load(clientName)

@@ -70,6 +70,8 @@ func (w *WsClientToStore) HandlerLoop() {
 		case msg := <-w.WsClient.readChan:
 			klog.Infof(string(msg.MessageData))
 			// 解析收到的请求
+			// TODO: 可以给予回应
+			//	w.WsClient.Conn.WriteMessage()
 
 		case <-w.WsClient.closeChan:
 			klog.Infof("chan closed!")

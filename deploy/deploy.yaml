@@ -24,10 +24,14 @@ spec:
           - containerPort: 8080
         args:
           # 服务配置项
-          - --lease-name=example-lease
-          - --lease-mode=true
-          - --server-port=8080
-          - --health-check-port=9998
+          - --lease-name=example-lease  # 分布式锁名，kubectl命令可以看到
+          #[root@VM-0-16-centos ~]# kubectl get leases.coordination.k8s.io
+          # NAME            HOLDER                            AGE
+          # example-lease   leaderelection-857c88477d-nmd58   38h
+          # my-lease        leaderelection-79d659b868-rfj27   2d16h
+          - --lease-mode=true        # 是否启动选主模式
+          - --server-port=8080       # 服务端口
+          - --health-check-port=9998 # 健康检查端口
         env:
           - name: POD_NAME
             valueFrom:

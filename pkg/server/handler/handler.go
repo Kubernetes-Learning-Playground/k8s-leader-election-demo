@@ -37,7 +37,7 @@ func Echo(writer http.ResponseWriter, request *http.Request) {
 	if name == nil {
 		name = []string{"sample" + uuid.New().String()}
 	}
-	data := name[0] + "is connected..."
+	data := name[0] + " is connected..."
 	err = client.WriteJSON(data) // 发送回客户端确认收到连接请求
 	klog.Infof(data)
 	if err != nil {
