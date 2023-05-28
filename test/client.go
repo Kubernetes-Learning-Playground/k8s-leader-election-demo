@@ -13,7 +13,7 @@ import (
 */
 
 var (
-	serverAddr = "ws://42.193.17.123:31180/ws/echo/"
+	serverAddr = "ws://xxx.xxx.xxx.xxx:31180/ws/echo/"
 )
 
 func main() {
