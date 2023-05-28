@@ -1,5 +1,5 @@
 ### 基于k8s提供的分布式锁实现集群内的pod选主机制
-
+![](https://github.com/googs1025/k8s-leader-election-demo/blob/main/image/%E6%B5%81%E7%A8%8B%E5%9B%BE%20(1).jpg?raw=true)
 #### 项目思路：
 使用k8s提供的分布式选主工具，实现pod间有状态应用。
 
@@ -63,6 +63,7 @@ I0527 00:38:39.460931       1 ws_client.go:71] from client to server, send test 
 ```
 
 5. 调用接口调适
+
 本项目server对外暴露接口，可使用websocket接口与http接口调适。
    
 ws服务接口调用可使用websocket在线测试或test目录中的测试代码。   
@@ -71,3 +72,6 @@ ws服务接口调用可使用websocket在线测试或test目录中的测试代�
 ws连接接口: 建立客户端与服务端的websocket连接，ws://xxx.xxx.xxx.xxx:31180/ws/echo/
 send接口: 选择特定客户端，并发对远端客户端发送数据，POST，http://xxx.xxx.xxx.xxx:31180/send
 ```
+![](https://github.com/googs1025/k8s-leader-election-demo/blob/main/image/img.png?raw=true)
+
+![](https://github.com/googs1025/k8s-leader-election-demo/blob/main/image/img_1.png?raw=true)
