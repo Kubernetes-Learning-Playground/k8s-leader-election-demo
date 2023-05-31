@@ -41,9 +41,10 @@ func main() {
 	flag.BoolVar(&debugMode, "debug-mode", false, "Whether to use debug mode")
 	flag.StringVar(&leaseLockNamespace, "lease-namespace", "default", "election lease leaselock namespace")
 	flag.IntVar(&port, "server-port", 8888, "")
-	flag.IntVar(&healthPort, "health-check-port", 9999, "")
+	flag.IntVar(&healthPort, "health-check-port", 29999, "")
 	flag.Parse()
 
+	// 配置文件
 	opt := &server.ServerOptions{
 		Port:               port,
 		HealthPort:         healthPort,

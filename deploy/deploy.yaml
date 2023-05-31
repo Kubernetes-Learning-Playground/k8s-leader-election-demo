@@ -22,6 +22,17 @@ spec:
         name: leaderelection
         ports:
           - containerPort: 8080
+          - containerPort: 29999
+            name: healthz
+            portocol: TCP
+        livenessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /healthz
+            port: healthz
+          initailDelaySeconds: 30
+          timeoutSeconds: 10
+          periodSeconds: 30
         args:
           # 服务配置项
           - --lease-name=example-lease  # 分布式锁名，kubectl命令可以看到
@@ -31,7 +42,7 @@ spec:
           # my-lease        leaderelection-79d659b868-rfj27   2d16h
           - --lease-mode=true        # 是否启动选主模式
           - --server-port=8080       # 服务端口
-          - --health-check-port=9998 # 健康检查端口
+          - --health-check-port=29999 # 健康检查端口
         env:
           - name: POD_NAME
             valueFrom:

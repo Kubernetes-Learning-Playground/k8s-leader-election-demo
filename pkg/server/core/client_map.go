@@ -27,7 +27,7 @@ type ClientMapStruct struct {
 func (c *ClientMapStruct) Store(conn *websocket.Conn, name string) {
 	wsClient := NewWsClient(conn)
 	wsClientToStore := NewWsClientToStore(wsClient, name)
-	klog.Info("save client对象: ", wsClientToStore.ClientName)
+	klog.Info("save client name: ", wsClientToStore.ClientName)
 	c.Data.Store(name, wsClientToStore) // 存入 key value需要记得
 
 	// 存入后需要启动执行ping命令，测试是否conn还在
@@ -45,8 +45,7 @@ func (c *ClientMapStruct) SendAll(msg string) {
 
 	c.Data.Range(func(key, value any) bool {
 		client := value.(*WsClientToStore)
-		i := value.(*WsClientToStore).WsClient.Conn
-		err := i.WriteMessage(websocket.TextMessage, []byte(msg)) // 遍历客户端发送msg消息
+		err := client.WsClient.Conn.WriteMessage(websocket.TextMessage, []byte(msg)) // 遍历客户端发送msg消息
 		if err != nil {
 			c.Remove(client)
 			log.Println(err)
