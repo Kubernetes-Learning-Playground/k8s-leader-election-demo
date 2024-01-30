@@ -38,7 +38,7 @@ func main() {
 	)
 	flag.StringVar(&leaseLockName, "lease-name", "lease-default-name", "election lease leaselock name")
 	flag.BoolVar(&leaseLockMode, "lease-mode", true, "Whether to use election mode")
-	flag.BoolVar(&debugMode, "debug-mode", false, "Whether to use debug mode")
+	flag.BoolVar(&debugMode, "debug-mode", true, "Whether to use debug mode")
 	flag.StringVar(&leaseLockNamespace, "lease-namespace", "default", "election lease leaselock namespace")
 	flag.IntVar(&port, "server-port", 8888, "")
 	flag.IntVar(&healthPort, "health-check-port", 29999, "")
@@ -64,11 +64,11 @@ func main() {
 
 	client = clientset.NewForConfigOrDie(config)
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	go func() {
 		<-signals.SetupSignalHandler()
 		cancel()
 	}()
-	defer cancel()
 
 	if opt.LeaderElectionMode {
 		lock := leaselock.GetNewLock(leaseLockName, podName, leaseLockNamespace, client)

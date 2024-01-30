@@ -2,9 +2,15 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"k8s-leader-election/pkg/server/model"
+	"k8s-leader-election/test/config"
+	"k8s-leader-election/test/plugin"
 	"k8s.io/klog"
+	"log"
+	"sync"
 	"time"
 )
 
@@ -13,10 +19,28 @@ import (
 */
 
 var (
-	serverAddr = "ws://xxx.xxx.xxx.xxx:31180/ws/echo/"
+	serverAddr string
+	clientName string
 )
 
 func main() {
+
+	// 读取配置文件
+	cfg, err := config.LoadConfig("./config.yaml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	serverAddr = fmt.Sprintf("ws://%s:%s/ws/echo/", cfg.ServerIp, cfg.ServerPort)
+	clientName = cfg.ClientName
+
+	// 启动插件
+	for _, pluginName := range cfg.Plugins {
+		component := plugin.ComponentPluginMap[pluginName]
+		err := component.SetAvailable()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -30,7 +54,7 @@ func testWebsocket(ctx context.Context) error {
 
 	// 使用header作为唯一标示
 	reqHeader := map[string][]string{
-		"Clientname": []string{"test-client"},
+		"Clientname": []string{clientName},
 	}
 
 	//向服务器发送连接请求，websocket
@@ -41,9 +65,6 @@ func testWebsocket(ctx context.Context) error {
 	}
 	// 关闭连接
 	defer connect.Close()
-
-	// 定时向客户端发送数据
-	go tickWriter(connect)
 
 	//启动数据读取循环，读取客户端发送来的数据
 	for {
@@ -57,7 +78,71 @@ func testWebsocket(ctx context.Context) error {
 		}
 		switch messageType {
 		case websocket.TextMessage: //文本数据
-			fmt.Println(">> server response: " + string(messageData))
+
+			var reqBody model.WsRequest
+
+			err := json.Unmarshal(messageData, &reqBody)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			var result model.WsResult
+			switch reqBody.Type {
+			case model.Connected:
+				result.ClientName = reqBody.ClientName
+				result.Type = reqBody.Type
+				result.Uuid = reqBody.Uuid
+			default:
+				result.ClientName = reqBody.ClientName
+				result.Type = reqBody.Type
+				result.Uuid = reqBody.Uuid
+				result.StatusList = make([]model.Status, 0)
+
+				var wg sync.WaitGroup
+				var mu sync.Mutex
+				for _, v := range reqBody.Operations {
+					wg.Add(1)
+
+					go func(op model.Operation) {
+						defer wg.Done()
+
+						var status string
+						var res model.Status
+						component, ok := plugin.ComponentPluginMap[op.Service]
+						if !ok {
+							status, _ = plugin.ComponentPluginMap["component_error"].Start(ctx, &op)
+						} else {
+
+							switch component.IsAvailable() {
+							case true:
+								status, err = component.Start(ctx, &op)
+								if err != nil {
+									status = "DoFail"
+								}
+							case false:
+								status, _ = plugin.ComponentPluginMap["component_error"].Start(ctx, &op)
+							}
+
+						}
+
+						res.Service = op.Service
+						res.Status = status
+
+						// 使用互斥锁保证线程安全地追加结果
+
+						mu.Lock()
+						result.StatusList = append(result.StatusList, res)
+						mu.Unlock()
+					}(v)
+				}
+
+				wg.Wait() // 阻塞主 goroutine，直到等待组计数器归零
+
+			}
+			err = connect.WriteJSON(result)
+			if err != nil {
+				log.Fatal(err)
+			}
 		case websocket.BinaryMessage: //二进制数据
 			fmt.Println(messageData)
 		case websocket.CloseMessage: //关闭
@@ -65,20 +150,6 @@ func testWebsocket(ctx context.Context) error {
 		case websocket.PongMessage: //Pong
 		default:
 		}
-	}
-}
-
-func tickWriter(connect *websocket.Conn) {
-	for i := 0; i < 5; i++ {
-		//向客户端发送类型为文本的数据
-		msg := "from client to server, send test message"
-		err := connect.WriteMessage(websocket.TextMessage, []byte(msg))
-		if nil != err {
-			klog.Error(err)
-			break
-		}
-		//休息一秒
-		time.Sleep(time.Second)
 	}
 }
 

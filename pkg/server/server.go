@@ -34,7 +34,7 @@ func Run(ctx context.Context, options *ServerOptions) {
 
 	http.HandleFunc("/test", handler.Test)
 	http.HandleFunc("/ws/echo/", handler.Echo)
-	http.HandleFunc("/send", handler.Send)
-	klog.Info(fmt.Sprintf(":%v", options.Port))
+	http.HandleFunc("/operation", handler.Operation)
+	klog.Info(fmt.Sprintf("http server :%v", options.Port))
 	http.ListenAndServe(fmt.Sprintf(":%v", options.Port), nil)
 }
